@@ -1,0 +1,156 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GC Tiquette - Mini Print</title>
+<style type="text/css">
+.box {
+	border: 1px solid #a1a1a1;
+	border-radius: 10px;
+	margin-bottom: 10px;
+	padding: 0px 5px 0px 5px;
+}
+
+.dragOver {
+	border-bottom: 3px dashed gray;
+}
+
+.title {
+	margin-top: 5px;
+	margin-bottom: 0px;
+}
+
+.coord {
+	width: 95%;
+	border: none;
+	font: bold 1.4em monospace;
+}
+
+.hint {
+	width: 99%;
+	font: normal 1em serif;
+	border: none;
+}
+
+.notes  {
+	display: none;
+	width: 99%;
+	font: normal 1em serif;
+	border: 1px dotted;
+}
+
+.tools {
+	float: right;
+	margin-top: 5px;
+}
+
+.tools a {
+	text-decoration: none;
+	outline: 0;
+}
+
+.tools img {
+	transition: opacity 0.3s;
+	opacity: 0.1;
+}
+
+.tools:hover img {
+	opacity: 1;
+}
+</style>
+<style media="print" type="text/css">
+.noprint {
+	display: none;
+}
+
+.noborderprint {
+	border: none;
+}
+</style>
+<script>
+	function removeMiniEntry(miniId) {
+		var toBeRemoved = document.getElementById(miniId);
+		toBeRemoved.parentNode.removeChild(toBeRemoved);
+	}
+	function displayPersonalNotes(noteId) {
+		var note = document.getElementById(noteId);
+		if (note.style.display == 'none' || note.style.display == '') {
+			note.style.display = 'block';
+		} else {
+			note.style.display = 'none';
+		}
+	}
+	function drag(ev, id) {
+		ev.dataTransfer.setData('id', id);
+	}
+	function displayDropTarget(ev) {
+		ev.preventDefault();
+		var box = getParentBox(ev.target);
+		if (box != null && ev.dataTransfer.getData('id') != box.id) {
+			box.className = 'box dragOver';
+		}
+	}
+	function hideDropTarget(ev) {
+		var box = getParentBox(ev.target);
+		if (box != null && ev.dataTransfer.getData('id') != box.id) {
+			box.className = 'box';
+		}
+	}
+	function drop(ev) {
+		ev.preventDefault();
+		var box = getParentBox(ev.target);
+		var draged = document.getElementById(ev.dataTransfer.getData('id'));
+		if (draged.id != box.id) {
+			box.parentNode.insertBefore(draged, box.nextSibling);
+		}
+	}
+	function getParentBox(node) {
+		if (node == null) {
+			return null;
+		}
+		while (!node.className.contains('box')) {
+			node = node.parentNode;
+		}
+		return node;
+	}
+</script>
+</head>
+<body>
+	<% for ( var i = 0; i < entries.length; i++) { var e = entries[i]; %>
+	<article id="<%= e.code %>" class="box" ondrop="hideDropTarget(event);drop(event)"
+		ondragover="displayDropTarget(event)" ondragleave="hideDropTarget(event)">
+
+		<span class="tools noprint"><a href="javascript:;"
+			onclick="displayPersonalNotes('<%= e.code %>-notes');return false;"><img alt="Notes" src="<%= icons.notes %>"></a>
+			<a href="javascript:;" onclick="removeMiniEntry('<%= e.code %>');return false;"><img alt="Supprimer"
+				src="<%= icons.remove %>"></a></span>
+
+		<h1 class="title" draggable="true" ondragstart="drag(event, '<%= e.code %>')">
+			<img src="<%= e.typeUrl %>" /><%= e.code %> <%= e.nom %>
+		</h1>
+		<p>
+			<input type="text" class="coord" value="<%= e.coordonnees %>" />
+		</p>
+		<p>
+			D : <img src="<%= e.difficulteUrl %>" /> / T : <img src="<%= e.terrainUrl %>" /> / S : <img
+				src="<%= e.tailleUrl %>" />
+		</p>
+		<% if (e.hint != null) { %>
+		<p>
+			Indice : <% /* transformation des "br" en \n et suppression des lignes blanches */ var hint = e.hint.replace(/<br\s*\/?>/ig,
+			'\r\n').replace(/^[\s\t]*(\r\n|\n|\r)/gm,""); %>
+			<textarea class="hint noborderprint" rows="<%= hint.split(/\r\n|\r|\n/).length %>"><%= hint %></textarea>
+		</p>
+		<% } if (e.spoilerUrls.length > 0) { %>
+		<p>
+			Spoiler(s) :<br /> <% for ( var j = 0; j < e.spoilerUrls.length; j++) { var spoilerUrl = e.spoilerUrls[j]; %> <img
+				src="<%= spoilerUrl %>" /><br /> <% } %>
+		</p>
+		<% } %>
+		<p>
+			<textarea id="<%= e.code %>-notes" class="notes noborderprint" >Notes :</textarea>
+		</p>
+	</article>
+	<% } %>
+</body>
+</html>
